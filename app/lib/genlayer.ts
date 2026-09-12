@@ -104,7 +104,8 @@ export async function listClaims(): Promise<Claim[]> {
 
   const client = await getReadClient();
   const address = contractAddress();
-  const rows = await client.readContract({ address, functionName: "list_claims", args: [] });
+  const rows = (await client.readContract({ address, functionName: "list_claims", args: [] })) as any[] | null;
+  if (!rows || !Array.isArray(rows)) return [];
   return Promise.all(
     rows.map(async (row: any) => ({
       ...row,
@@ -122,10 +123,11 @@ export async function getClaim(id: number): Promise<Claim | undefined> {
 
   const client = await getReadClient();
   const address = contractAddress();
-  const [claim, evidence] = await Promise.all([
+  const [claim, evidence] = (await Promise.all([
     client.readContract({ address, functionName: "get_claim", args: [id] }),
     client.readContract({ address, functionName: "get_evidence", args: [id] }),
-  ]);
+  ])) as [any, any];
+  if (!claim) return undefined;
   return { ...claim, id, evidence };
 }
 
@@ -162,7 +164,11 @@ export async function adjudicate(id: number): Promise<string> {
     value: BigInt(0),
   });
   await client.waitForTransactionReceipt({
-    hash: transactionHash,
+    // Same genlayer-js Hash-branding gap as deploy/001_deploy_parcel_court.ts
+    // and scripts/seed_fixtures.ts: writeContract returns a plain
+    // `0x${string}`, waitForTransactionReceipt wants the nominally-branded
+    // Hash (`0x${string}` & { length: 66 }).
+    hash: transactionHash as unknown as import("genlayer-js/types").Hash,
     status: TransactionStatus.FINALIZED,
   });
   // The receipt shape doesn't guarantee a decoded `verdict` field for an

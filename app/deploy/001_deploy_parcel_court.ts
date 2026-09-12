@@ -21,6 +21,17 @@ import path from "node:path";
 import { createClient, createAccount } from "genlayer-js";
 import * as chains from "genlayer-js/chains";
 import { TransactionStatus } from "genlayer-js/types";
+import type { Hash } from "genlayer-js/types";
+
+function assertHexPrivateKey(key: string): asserts key is `0x${string}` {
+  if (!/^0x[0-9a-fA-F]{64}$/.test(key)) {
+    throw new Error(
+      "GENLAYER_DEPLOYER_KEY must be a 0x-prefixed 32-byte hex private key " +
+        "(66 characters total, e.g. 0x1234...). The value currently set " +
+        "doesn't match that shape."
+    );
+  }
+}
 
 async function main() {
   const chainName = process.env.GENLAYER_CHAIN ?? "studionet";
@@ -39,6 +50,7 @@ async function main() {
         "account key, or your funded testnet key, and set it in .env."
     );
   }
+  assertHexPrivateKey(privateKey);
 
   const account = createAccount(privateKey);
   const client = createClient({ chain, account });
@@ -59,7 +71,15 @@ async function main() {
   });
 
   const receipt = await client.waitForTransactionReceipt({
-    hash: transactionHash,
+    // deployContract's return type is a plain `0x${string}`, but
+    // waitForTransactionReceipt's `hash` param is genlayer-js's nominally
+    // branded `Hash` type (`0x${string}` & { length: 66 }) — a template
+    // literal type can't satisfy that structurally no matter its runtime
+    // value, only via an explicit cast. Every usage example in genlayer-js's
+    // own docs passes a hash straight through with no cast at all, so this
+    // looks like a real gap between their documented usage and their
+    // strict-mode types, not a mistake on our end.
+    hash: transactionHash as unknown as Hash,
     status: TransactionStatus.ACCEPTED,
     retries: 50,
     interval: 5000,

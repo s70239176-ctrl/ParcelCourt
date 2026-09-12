@@ -16,6 +16,36 @@
 import { createClient, createAccount } from "genlayer-js";
 import * as chains from "genlayer-js/chains";
 import { TransactionStatus } from "genlayer-js/types";
+import type { Hash } from "genlayer-js/types";
+
+function assertHexPrivateKey(key: string): asserts key is `0x${string}` {
+  if (!/^0x[0-9a-fA-F]{64}$/.test(key)) {
+    throw new Error(
+      "GENLAYER_DEPLOYER_KEY must be a 0x-prefixed 32-byte hex private key " +
+        "(66 characters total, e.g. 0x1234...). The value currently set " +
+        "doesn't match that shape."
+    );
+  }
+}
+
+// readContract's return type is genlayer-js's generic on-chain calldata
+// representation (CalldataEncodable | null) — it has no way to know that
+// THIS contract's list_claims/get_claim return something shaped like a
+// claim. This mirrors _claim_to_dict in contracts/parcel_court.py exactly,
+// so we can cast at the boundary instead of scattering `any`.
+type SeedClaimRow = {
+  id: number;
+  order_id: string;
+  sku: string;
+  amount_cents: number;
+  buyer: string;
+  seller: string;
+  tracking_url: string;
+  listing_url: string;
+  status: string;
+  verdict: string;
+  rationale: string;
+};
 
 const SELLER = "0xSELLER0000000000000000000000000000001";
 const LISTING_URL = "https://shop.example/listings/wireless-earbuds-4821";
@@ -116,6 +146,7 @@ async function main() {
     throw new Error(`GENLAYER_CONTRACT_ADDRESS is not a valid 0x-prefixed address: "${contractAddressEnv}"`);
   }
   const contractAddress = contractAddressEnv as `0x${string}`;
+  assertHexPrivateKey(privateKey);
 
   const account = createAccount(privateKey);
   const client = createClient({ chain, account });
@@ -129,9 +160,26 @@ async function main() {
   // claim just opened; confirm this works against your real deployment
   // and swap in a direct receipt-decoded claim_id if genlayer-js exposes
   // one more directly.
-  async function writeAndConfirm(functionName: string, args: unknown[]) {
-    const hash = await client.writeContract({ address: contractAddress, functionName, args });
-    return client.waitForTransactionReceipt({ hash, status: TransactionStatus.FINALIZED });
+  // Derived from `client.writeContract`'s own signature rather than a named
+  // import — the compiler's error only tells us the type is *called*
+  // CalldataEncodable, not that it's actually exported by name from
+  // genlayer-js/types (TS prints internal type names in errors regardless
+  // of public export status). Indexing off the real, already-correctly-
+  // typed `client` value sidesteps that uncertainty entirely.
+  async function writeAndConfirm(
+    functionName: string,
+    args: Parameters<typeof client.writeContract>[0]["args"]
+  ) {
+    const hash = await client.writeContract({
+      address: contractAddress,
+      functionName,
+      args,
+      value: BigInt(0),
+    });
+    // Same genlayer-js Hash-branding gap as deploy/001_deploy_parcel_court.ts:
+    // writeContract returns a plain `0x${string}`, waitForTransactionReceipt
+    // wants the nominally-branded Hash (`0x${string}` & { length: 66 }).
+    return client.waitForTransactionReceipt({ hash: hash as unknown as Hash, status: TransactionStatus.FINALIZED });
   }
 
   for (const scenario of SCENARIOS) {
@@ -144,12 +192,26 @@ async function main() {
       scenario.tracking_url,
       LISTING_URL,
     ]);
-    const claims = await client.readContract({
+    const claims = (await client.readContract({
       address: contractAddress,
       functionName: "list_claims",
       args: [],
-    });
-    const claimId = claims[claims.length - 1]?.id ?? claims[claims.length - 1]?.claim_id;
+    })) as SeedClaimRow[] | null;
+    if (!claims || !Array.isArray(claims) || claims.length === 0) {
+      throw new Error(
+        `list_claims returned no claims after opening ${scenario.label} — ` +
+          "expected at least the claim just opened."
+      );
+    }
+    const lastClaim = claims[claims.length - 1];
+    const claimId = lastClaim?.id;
+    if (claimId === undefined) {
+      throw new Error(
+        `The claim just opened for ${scenario.label} has no "id" field — ` +
+          "check that _claim_to_dict in contracts/parcel_court.py still " +
+          'returns "id" as a key.'
+      );
+    }
     console.log(`  claim_id = ${claimId}`);
 
     for (const row of scenario.evidence) {
@@ -166,11 +228,11 @@ async function main() {
 
     if (process.env.SEED_SKIP_ADJUDICATE !== "1") {
       await writeAndConfirm("adjudicate", [claimId]);
-      const claim = await client.readContract({
+      const claim = (await client.readContract({
         address: contractAddress,
         functionName: "get_claim",
         args: [claimId],
-      });
+      })) as SeedClaimRow | null;
       console.log(`  verdict: ${claim?.verdict}`);
     }
   }
