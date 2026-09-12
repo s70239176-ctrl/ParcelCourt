@@ -1,0 +1,17 @@
+{
+  "network": "genlayer-testnet-asimov",
+  "unit": "mock-stable-cents",
+  "operations": {
+    "deploy": { "estimated_fee": 1200 },
+    "open_claim": { "estimated_fee": 80 },
+    "submit_evidence": { "estimated_fee": 40 },
+    "adjudicate": {
+      "estimated_fee": 950,
+      "note": "Dominated by validator LLM equivalence rounds under gl.eq_principle.prompt_non_comparative, not by state writes."
+    }
+  },
+  "notes": [
+    "Figures are testnet placeholders for demo/UX purposes (Studio surfaces live estimates via client.estimateDeployFee / per-tx quotes).",
+    "adjudicate() cost scales with the number of eq_principle rounds needed for validator convergence, not with dossier size directly."
+  ]
+}

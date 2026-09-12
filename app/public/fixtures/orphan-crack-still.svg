@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320">
+  <rect width="480" height="320" fill="#efe8de"/>
+  <rect x="1" y="1" width="478" height="318" fill="none" stroke="#111111" stroke-opacity="0.25"/>
+  <rect x="150" y="90" width="180" height="130" fill="#f6f1ea" stroke="#111111" stroke-width="2"/>
+    <path d="M160 110 L280 190" stroke="#8b1e1e" stroke-width="2"/>
+    <text x="240" y="240" font-family="IBM Plex Sans" font-size="11" fill="#4a453f" text-anchor="middle">no weight · no video</text>
+  <text x="24" y="292" font-family="IBM Plex Sans, sans-serif" font-size="13" fill="#4a453f">Orphan still — hairline crack</text>
+</svg>

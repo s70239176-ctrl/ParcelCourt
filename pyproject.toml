@@ -1,0 +1,28 @@
+[project]
+name = "parcelcourt"
+version = "0.1.0"
+description = "Inbound-condition adjudication court settled by a GenLayer Intelligent Contract."
+requires-python = ">=3.11"
+# No runtime Python dependency: contracts/parcel_court.py only ever runs
+# inside GenVM (via GenLayer Studio), which injects `gl` itself at execution
+# time. There is nothing to `pip install` that provides `gl` for a bare
+# local process — `pip install genlayer` resolves to PyPI's genlayer==0.0.1,
+# an empty placeholder GenLayer Labs uploaded to reserve the name (see
+# https://pypi.org/project/genlayer/). Don't add it as a dependency here.
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "genlayer-test>=0.6.0",  # provides the `gltest` CLI, run against a live Studio deployment
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/direct"]
+markers = [
+    "integration: requires a live GenLayer Studio/testnet deployment (run with gltest instead)",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

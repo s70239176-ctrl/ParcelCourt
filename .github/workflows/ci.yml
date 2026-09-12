@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  contract-tests:
+    name: Direct contract tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          # NOTE: `pip install genlayer` is deliberately NOT done here — that
+          # name resolves to PyPI's genlayer==0.0.1, an empty placeholder
+          # package with no `gl` (see https://pypi.org/project/genlayer/).
+          # `genlayer-test` is the real package with Direct Mode support;
+          # install attempts here are best-effort since it may not always be
+          # available to CI runners without network/registry access.
+          pip install genlayer-test || echo "genlayer-test unavailable in this environment; tests/direct falls back to the offline stub in tests/direct/_stub"
+      - name: Run direct tests
+        run: pytest tests/direct -v
+
+  frontend:
+    name: Lint + typecheck app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install deps
+        run: npm install
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Build (mock mode, no live contract needed)
+        env:
+          NEXT_PUBLIC_MOCK: "1"
+        run: npm run build
