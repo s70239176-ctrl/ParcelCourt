@@ -35,13 +35,33 @@ function assertHexPrivateKey(key: string): asserts key is `0x${string}` {
 
 async function main() {
   const chainName = process.env.GENLAYER_CHAIN ?? "studionet";
-  const chain = (chains as Record<string, import("genlayer-js/types").GenLayerChain>)[chainName];
+  const customRpcUrl = process.env.GENLAYER_RPC_URL;
+  const customChainId = process.env.GENLAYER_CHAIN_ID;
+  const preset = (chains as Record<string, import("genlayer-js/types").GenLayerChain>)[chainName];
+
+  // Same custom-environment fallback as app/lib/genlayer.ts's resolveChain
+  // — see the detailed comment there on the unverified assumption this
+  // makes (inheriting studionet's consensus contract addresses). Keep
+  // these two in sync if that ever needs revisiting.
+  let chain: import("genlayer-js/types").GenLayerChain | undefined = preset;
+  if (!chain && customRpcUrl && customChainId) {
+    const base = (chains as Record<string, import("genlayer-js/types").GenLayerChain>)["studionet"];
+    chain = {
+      ...base,
+      id: Number(customChainId),
+      name: chainName,
+      rpcUrls: { ...base.rpcUrls, default: { http: [customRpcUrl] } },
+    };
+  }
+
   const privateKey = process.env.GENLAYER_DEPLOYER_KEY;
 
   if (!chain) {
     throw new Error(
       `Unknown GENLAYER_CHAIN "${chainName}". Expected one of: localnet, ` +
-        "studionet, testnetAsimov, testnetBradbury."
+        "studionet, testnetAsimov, testnetBradbury — or set both " +
+        "GENLAYER_RPC_URL and GENLAYER_CHAIN_ID to point at a custom " +
+        "environment."
     );
   }
   if (!privateKey) {

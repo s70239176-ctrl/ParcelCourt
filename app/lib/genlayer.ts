@@ -21,9 +21,11 @@ import { Claim, FIXTURE_CLAIMS, getFixtureClaim } from "./fixtures";
 // build). Live mode is opt-in: set NEXT_PUBLIC_MOCK=0 explicitly.
 const isMock = process.env.NEXT_PUBLIC_MOCK !== "0";
 
-// One of the chain export names in genlayer-js/chains: "localnet",
-// "studionet", "testnetAsimov", "testnetBradbury". Defaults to studionet,
-// which is what GENLAYER_RPC used to implicitly mean for most setups.
+// One of the chain export names in genlayer-js/chains ("localnet",
+// "studionet", "testnetAsimov", "testnetBradbury"), OR a custom
+// environment name (e.g. "studio-dev") paired with
+// NEXT_PUBLIC_GENLAYER_RPC_URL + NEXT_PUBLIC_GENLAYER_CHAIN_ID below.
+// Defaults to studionet.
 //
 // NEXT_PUBLIC_-prefixed: adjudicate() runs client-side (it needs
 // window.ethereum to let a connected wallet sign the transaction — that
@@ -32,18 +34,52 @@ const isMock = process.env.NEXT_PUBLIC_MOCK !== "0";
 // (used solely by the standalone deploy/seed scripts, never by this file)
 // needs to stay unprefixed.
 const CHAIN_NAME = process.env.NEXT_PUBLIC_GENLAYER_CHAIN ?? "studionet";
+const CUSTOM_RPC_URL = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL;
+const CUSTOM_CHAIN_ID = process.env.NEXT_PUBLIC_GENLAYER_CHAIN_ID;
 
 async function resolveChain(): Promise<import("genlayer-js/types").GenLayerChain> {
   const chains = await import("genlayer-js/chains");
   const byName: Record<string, import("genlayer-js/types").GenLayerChain> = chains as any;
-  const chain = byName[CHAIN_NAME];
-  if (!chain) {
-    throw new Error(
-      `Unknown GENLAYER_CHAIN "${CHAIN_NAME}". Expected one of: localnet, ` +
-        "studionet, testnetAsimov, testnetBradbury."
-    );
+  const preset = byName[CHAIN_NAME];
+  if (preset) return preset;
+
+  // Not one of the four built-in presets. genlayer-js/chains has no
+  // "studio-dev"-style entry as of v1.1.8 (confirmed against the package's
+  // own docs/source), so a Studio environment under a different name needs
+  // to be built manually: take `studionet` as a base and override just the
+  // RPC endpoint and chain ID.
+  //
+  // UNVERIFIED ASSUMPTION, flagged deliberately: this inherits studionet's
+  // consensusMainContract/consensusDataContract addresses on the theory
+  // that a "studio-dev"-type environment is the same consensus deployment
+  // behind a different RPC gateway, not a separate one. GenLayer's own
+  // genlayer-py release notes classify multiple hosted "Studio" chain IDs
+  // (61997, 61999) as siblings under the same "Studio chain" category,
+  // which supports but doesn't prove this. If reads work but writes fail
+  // in a way that looks like a rejected/misrouted transaction rather than
+  // a clear error, THIS is the assumption to revisit — get the actual
+  // consensusMainContract/consensusDataContract addresses for this
+  // specific environment from whoever provided its RPC URL/chain ID, and
+  // override those two fields as well.
+  if (CUSTOM_RPC_URL && CUSTOM_CHAIN_ID) {
+    const base = byName["studionet"];
+    return {
+      ...base,
+      id: Number(CUSTOM_CHAIN_ID),
+      name: CHAIN_NAME,
+      rpcUrls: {
+        ...base.rpcUrls,
+        default: { http: [CUSTOM_RPC_URL] },
+      },
+    };
   }
-  return chain;
+
+  throw new Error(
+    `Unknown GENLAYER_CHAIN "${CHAIN_NAME}". Expected one of: localnet, ` +
+      "studionet, testnetAsimov, testnetBradbury — or set both " +
+      "NEXT_PUBLIC_GENLAYER_RPC_URL and NEXT_PUBLIC_GENLAYER_CHAIN_ID to " +
+      "point at a custom environment."
+  );
 }
 
 let cachedReadClient: any | null = null;

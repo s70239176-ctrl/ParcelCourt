@@ -122,14 +122,34 @@ const SCENARIOS = [
 
 async function main() {
   const chainName = process.env.GENLAYER_CHAIN ?? "studionet";
-  const chain = (chains as Record<string, import("genlayer-js/types").GenLayerChain>)[chainName];
+  const customRpcUrl = process.env.GENLAYER_RPC_URL;
+  const customChainId = process.env.GENLAYER_CHAIN_ID;
+  const preset = (chains as Record<string, import("genlayer-js/types").GenLayerChain>)[chainName];
+
+  // Same custom-environment fallback as app/lib/genlayer.ts's resolveChain
+  // and deploy/001_deploy_parcel_court.ts — see the detailed comment in
+  // lib/genlayer.ts on the unverified assumption this makes (inheriting
+  // studionet's consensus contract addresses). Keep all three in sync.
+  let chain: import("genlayer-js/types").GenLayerChain | undefined = preset;
+  if (!chain && customRpcUrl && customChainId) {
+    const base = (chains as Record<string, import("genlayer-js/types").GenLayerChain>)["studionet"];
+    chain = {
+      ...base,
+      id: Number(customChainId),
+      name: chainName,
+      rpcUrls: { ...base.rpcUrls, default: { http: [customRpcUrl] } },
+    };
+  }
+
   const contractAddressEnv = process.env.GENLAYER_CONTRACT_ADDRESS;
   const privateKey = process.env.GENLAYER_DEPLOYER_KEY;
 
   if (!chain) {
     throw new Error(
       `Unknown GENLAYER_CHAIN "${chainName}". Expected one of: localnet, ` +
-        "studionet, testnetAsimov, testnetBradbury."
+        "studionet, testnetAsimov, testnetBradbury — or set both " +
+        "GENLAYER_RPC_URL and GENLAYER_CHAIN_ID to point at a custom " +
+        "environment."
     );
   }
   if (!contractAddressEnv || !privateKey) {
