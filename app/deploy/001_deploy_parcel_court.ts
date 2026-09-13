@@ -92,6 +92,12 @@ async function main() {
   console.log("Transaction hash: ", transactionHash);
   console.log("---");
   console.log(`Set GENLAYER_CONTRACT_ADDRESS=${address} in app/.env.local`);
+  console.log(
+    `Also set NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS=${address} (same ` +
+      "value, different var — the deployed app reads the NEXT_PUBLIC_ " +
+      "copy client-side; this script and seed_fixtures.ts read the " +
+      "unprefixed one)."
+  );
 }
 
 main().catch((err) => {

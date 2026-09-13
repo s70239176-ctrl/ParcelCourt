@@ -24,7 +24,14 @@ const isMock = process.env.NEXT_PUBLIC_MOCK !== "0";
 // One of the chain export names in genlayer-js/chains: "localnet",
 // "studionet", "testnetAsimov", "testnetBradbury". Defaults to studionet,
 // which is what GENLAYER_RPC used to implicitly mean for most setups.
-const CHAIN_NAME = process.env.GENLAYER_CHAIN ?? "studionet";
+//
+// NEXT_PUBLIC_-prefixed: adjudicate() runs client-side (it needs
+// window.ethereum to let a connected wallet sign the transaction — that
+// can't move to a server action), so this has to be readable in the
+// browser bundle. A chain name isn't sensitive; only GENLAYER_DEPLOYER_KEY
+// (used solely by the standalone deploy/seed scripts, never by this file)
+// needs to stay unprefixed.
+const CHAIN_NAME = process.env.NEXT_PUBLIC_GENLAYER_CHAIN ?? "studionet";
 
 async function resolveChain(): Promise<import("genlayer-js/types").GenLayerChain> {
   const chains = await import("genlayer-js/chains");
@@ -66,11 +73,11 @@ async function getWriteClient() {
   const injected = typeof window !== "undefined" ? (window as any).ethereum : undefined;
   const rawAccount: string | undefined = injected
     ? (await injected.request({ method: "eth_requestAccounts" }))?.[0]
-    : process.env.GENLAYER_DEMO_ACCOUNT;
+    : process.env.NEXT_PUBLIC_GENLAYER_DEMO_ACCOUNT;
   if (!rawAccount) {
     throw new Error(
       "No wallet detected and no demo account configured. Connect a " +
-        "wallet, or set GENLAYER_DEMO_ACCOUNT for headless demos."
+        "wallet, or set NEXT_PUBLIC_GENLAYER_DEMO_ACCOUNT for headless demos."
     );
   }
   const account = asAddress(rawAccount);
@@ -79,11 +86,11 @@ async function getWriteClient() {
 }
 
 function contractAddress(): `0x${string}` {
-  const address = process.env.GENLAYER_CONTRACT_ADDRESS;
+  const address = process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS;
   if (!address) {
     throw new Error(
-      "Live mode requires GENLAYER_CONTRACT_ADDRESS. Unset NEXT_PUBLIC_MOCK " +
-        "(or set it to 1) to run against fixtures instead."
+      "Live mode requires NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS. Unset " +
+        "NEXT_PUBLIC_MOCK (or set it to 1) to run against fixtures instead."
     );
   }
   return asAddress(address);
