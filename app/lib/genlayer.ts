@@ -63,6 +63,13 @@ async function resolveChain(): Promise<import("genlayer-js/types").GenLayerChain
   // override those two fields as well.
   if (CUSTOM_RPC_URL && CUSTOM_CHAIN_ID) {
     const base = byName["studionet"];
+    if (!base) {
+      throw new Error(
+        "Couldn't find the studionet preset in genlayer-js/chains to base " +
+          `the custom chain "${CHAIN_NAME}" on — something is wrong with ` +
+          "the installed genlayer-js version."
+      );
+    }
     return {
       ...base,
       id: Number(CUSTOM_CHAIN_ID),

@@ -133,6 +133,13 @@ async function main() {
   let chain: import("genlayer-js/types").GenLayerChain | undefined = preset;
   if (!chain && customRpcUrl && customChainId) {
     const base = (chains as Record<string, import("genlayer-js/types").GenLayerChain>)["studionet"];
+    if (!base) {
+      throw new Error(
+        "Couldn't find the studionet preset in genlayer-js/chains to base " +
+          `the custom chain "${chainName}" on — something is wrong with ` +
+          "the installed genlayer-js version."
+      );
+    }
     chain = {
       ...base,
       id: Number(customChainId),
