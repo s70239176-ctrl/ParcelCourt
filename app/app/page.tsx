@@ -40,8 +40,11 @@ export default async function DocketPage() {
             No claims on the docket yet.
           </p>
           <p style={{ marginTop: 8, fontSize: "0.9rem" }}>
-            Open one with <code>open_claim</code>, or run <code>npm run seed</code> to
-            load the three canonical fixtures.
+            <Link href="/claims/new" style={{ textDecoration: "underline" }}>
+              Open one
+            </Link>
+            , or run <code>npm run seed</code> to load the three canonical
+            fixtures.
           </p>
         </div>
       ) : (

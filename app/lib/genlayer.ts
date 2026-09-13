@@ -226,6 +226,59 @@ export async function adjudicate(id: number): Promise<string> {
   return (await getClaim(id))?.verdict ?? "";
 }
 
+export async function openClaim(params: {
+  orderId: string;
+  sku: string;
+  amountCents: number;
+  seller: string;
+  trackingUrl: string;
+  listingUrl: string;
+}): Promise<number> {
+  if (isMock) {
+    throw new Error(
+      "Submitting a claim isn't available in mock mode — there's no real " +
+        "contract behind it to write to. This needs live mode " +
+        "(NEXT_PUBLIC_MOCK=0) with a deployed contract."
+    );
+  }
+  if (!Number.isInteger(params.amountCents) || params.amountCents <= 0) {
+    throw new Error("amount_cents must be a positive whole number of cents.");
+  }
+
+  const { TransactionStatus } = await import("genlayer-js/types");
+  const client = await getWriteClient();
+  const address = contractAddress();
+  const sellerAddress = asAddress(params.seller);
+
+  const transactionHash = await client.writeContract({
+    address,
+    functionName: "open_claim",
+    args: [params.orderId, params.sku, params.amountCents, sellerAddress, params.trackingUrl, params.listingUrl],
+    value: BigInt(0),
+  });
+  await client.waitForTransactionReceipt({
+    // Same genlayer-js Hash-branding gap as adjudicate() above.
+    hash: transactionHash as unknown as import("genlayer-js/types").Hash,
+    status: TransactionStatus.FINALIZED,
+  });
+
+  // Same pattern as scripts/seed_fixtures.ts: writeContract's receipt
+  // doesn't reliably decode a typed return value for an arbitrary
+  // contract, so re-read list_claims and find the new one instead of
+  // trusting the receipt shape. Matching on order_id (rather than just
+  // taking claims[claims.length - 1]) narrows, but doesn't eliminate, the
+  // race if two people submit around the same time — a fully race-proof
+  // version would need to decode open_claim's actual return value off the
+  // receipt, which this codebase doesn't currently do anywhere.
+  const claims = await listClaims();
+  const matches = claims.filter((c) => c.order_id === params.orderId);
+  const newest = matches.length > 0 ? matches[matches.length - 1] : claims[claims.length - 1];
+  if (!newest) {
+    throw new Error("open_claim succeeded on-chain, but the new claim couldn't be read back afterward.");
+  }
+  return newest.id;
+}
+
 export function isMockMode() {
   return isMock;
 }
