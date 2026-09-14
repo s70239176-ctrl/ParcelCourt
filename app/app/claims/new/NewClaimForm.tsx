@@ -1,29 +1,49 @@
 "use client";
 
-import { useState, type FormEvent, type CSSProperties } from "react";
-import { useRouter } from "next/navigation";
+import { useState, type FormEvent, type CSSProperties, type ReactNode } from "react";
+import Link from "next/link";
 import { openClaim } from "@/lib/genlayer";
+import { caseId } from "@/components/DocketRow";
 
-type State = "idle" | "pending" | "error";
+type State = "idle" | "pending" | "error" | "done";
 
 const FIELD_STYLE: CSSProperties = {
   width: "100%",
   fontFamily: "var(--sans)",
-  fontSize: "0.9rem",
-  padding: "10px 12px",
-  border: "1px solid var(--hairline-strong)",
-  background: "var(--paper)",
+  fontSize: "0.92rem",
+  padding: "11px 12px",
+  border: "1px solid var(--line-strong)",
+  background: "var(--surface)",
   color: "var(--ink)",
 };
 
-const LABEL_STYLE: CSSProperties = {
-  display: "block",
-  fontFamily: "var(--sans)",
-  fontSize: "0.78rem",
-  letterSpacing: "0.06em",
-  color: "var(--ink-soft)",
-  marginBottom: 6,
-};
+function Section({ number, title, children }: { number: string; title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginBottom: 40 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 18 }}>
+        <span className="mono" style={{ fontSize: "0.8rem", color: "var(--graphite-soft)" }}>
+          {number}
+        </span>
+        <p className="field-label">{title}</p>
+      </div>
+      <div style={{ display: "grid", gap: 16 }}>{children}</div>
+    </div>
+  );
+}
+
+function Field({ label, htmlFor, children }: { label: string; htmlFor: string; children: ReactNode }) {
+  return (
+    <div>
+      <label
+        htmlFor={htmlFor}
+        style={{ display: "block", fontSize: "0.82rem", color: "var(--graphite)", marginBottom: 6 }}
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
 
 export default function NewClaimForm() {
   const [orderId, setOrderId] = useState("");
@@ -34,7 +54,7 @@ export default function NewClaimForm() {
   const [listingUrl, setListingUrl] = useState("");
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const [newId, setNewId] = useState<number | null>(null);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -55,7 +75,7 @@ export default function NewClaimForm() {
     setState("pending");
     try {
       const amountCents = Math.round(dollars * 100);
-      const newId = await openClaim({
+      const id = await openClaim({
         orderId: orderId.trim(),
         sku: sku.trim(),
         amountCents,
@@ -63,133 +83,175 @@ export default function NewClaimForm() {
         trackingUrl: trackingUrl.trim(),
         listingUrl: listingUrl.trim(),
       });
-      router.push(`/claims/${newId}`);
+      setNewId(id);
+      setState("done");
     } catch (err) {
       setState("error");
       setError(err instanceof Error ? err.message : "Opening the claim failed.");
     }
   }
 
-  const disabled = state === "pending";
-
-  return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 480, display: "grid", gap: 20 }}>
-      <div>
-        <label style={LABEL_STYLE} htmlFor="order_id">
-          ORDER ID
-        </label>
-        <input
-          id="order_id"
-          required
-          disabled={disabled}
-          value={orderId}
-          onChange={(e) => setOrderId(e.target.value)}
-          placeholder="ORD-4821"
-          style={FIELD_STYLE}
-        />
-      </div>
-
-      <div>
-        <label style={LABEL_STYLE} htmlFor="sku">
-          SKU
-        </label>
-        <input
-          id="sku"
-          required
-          disabled={disabled}
-          value={sku}
-          onChange={(e) => setSku(e.target.value)}
-          placeholder="EARBUD-WHT-01"
-          style={FIELD_STYLE}
-        />
-      </div>
-
-      <div>
-        <label style={LABEL_STYLE} htmlFor="amount">
-          AMOUNT (USD)
-        </label>
-        <input
-          id="amount"
-          required
-          disabled={disabled}
-          type="number"
-          min="0.01"
-          step="0.01"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="89.00"
-          style={FIELD_STYLE}
-        />
-      </div>
-
-      <div>
-        <label style={LABEL_STYLE} htmlFor="seller">
-          SELLER ADDRESS
-        </label>
-        <input
-          id="seller"
-          required
-          disabled={disabled}
-          value={seller}
-          onChange={(e) => setSeller(e.target.value)}
-          placeholder="0x..."
-          style={{ ...FIELD_STYLE, fontFamily: "monospace" }}
-        />
-      </div>
-
-      <div>
-        <label style={LABEL_STYLE} htmlFor="tracking_url">
-          TRACKING URL
-        </label>
-        <input
-          id="tracking_url"
-          required
-          disabled={disabled}
-          type="url"
-          value={trackingUrl}
-          onChange={(e) => setTrackingUrl(e.target.value)}
-          placeholder="https://track.example/..."
-          style={FIELD_STYLE}
-        />
-      </div>
-
-      <div>
-        <label style={LABEL_STYLE} htmlFor="listing_url">
-          LISTING URL
-        </label>
-        <input
-          id="listing_url"
-          required
-          disabled={disabled}
-          type="url"
-          value={listingUrl}
-          onChange={(e) => setListingUrl(e.target.value)}
-          placeholder="https://listing.example/..."
-          style={FIELD_STYLE}
-        />
-      </div>
-
-      <div>
-        <button
-          type="submit"
-          disabled={disabled}
+  if (state === "done" && newId !== null) {
+    return (
+      <div style={{ maxWidth: 480 }}>
+        <p className="field-label" style={{ marginBottom: 10 }}>
+          Claim opened
+        </p>
+        <div className="case-id" style={{ fontSize: "2.8rem", marginBottom: 16 }}>
+          {caseId(newId)}
+        </div>
+        <p style={{ color: "var(--graphite)", marginBottom: 28 }}>
+          Case created. Waiting for evidence and adjudication.
+        </p>
+        <Link
+          href={`/claims/${newId}`}
           style={{
-            fontFamily: "var(--sans)",
+            display: "inline-block",
             fontSize: "0.85rem",
-            padding: "10px 18px",
+            fontWeight: 600,
+            padding: "10px 20px",
             border: "1.5px solid var(--ink)",
-            background: disabled ? "var(--paper-dim)" : "transparent",
-            cursor: disabled ? "default" : "pointer",
+            textDecoration: "none",
+            color: "var(--ink)",
           }}
         >
-          {state === "pending" ? "Opening claim…" : "Open claim"}
-        </button>
-        {state === "error" && (
-          <p style={{ color: "var(--oxblood)", fontSize: "0.8rem", marginTop: 8, maxWidth: 400 }}>
-            {error}
-          </p>
-        )}
+          View case →
+        </Link>
       </div>
+    );
+  }
+
+  const disabled = state === "pending";
+  const dollarsValid = Number(amount) > 0;
+
+  return (
+    <form onSubmit={handleSubmit} style={{ maxWidth: 480 }}>
+      <Section number="01" title="Order">
+        <Field label="Order ID" htmlFor="order_id">
+          <input
+            id="order_id"
+            required
+            disabled={disabled}
+            value={orderId}
+            onChange={(e) => setOrderId(e.target.value)}
+            placeholder="ORD-4821"
+            style={FIELD_STYLE}
+          />
+        </Field>
+        <Field label="SKU" htmlFor="sku">
+          <input
+            id="sku"
+            required
+            disabled={disabled}
+            value={sku}
+            onChange={(e) => setSku(e.target.value)}
+            placeholder="EARBUD-WHT-01"
+            style={FIELD_STYLE}
+          />
+        </Field>
+        <Field label="Amount (USD)" htmlFor="amount">
+          <input
+            id="amount"
+            required
+            disabled={disabled}
+            type="number"
+            min="0.01"
+            step="0.01"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="89.00"
+            style={FIELD_STYLE}
+          />
+        </Field>
+      </Section>
+
+      <Section number="02" title="Merchant">
+        <Field label="Seller address" htmlFor="seller">
+          <input
+            id="seller"
+            required
+            disabled={disabled}
+            value={seller}
+            onChange={(e) => setSeller(e.target.value)}
+            placeholder="0x..."
+            className="mono"
+            style={FIELD_STYLE}
+          />
+        </Field>
+      </Section>
+
+      <Section number="03" title="Verification sources">
+        <Field label="Tracking URL" htmlFor="tracking_url">
+          <input
+            id="tracking_url"
+            required
+            disabled={disabled}
+            type="url"
+            value={trackingUrl}
+            onChange={(e) => setTrackingUrl(e.target.value)}
+            placeholder="https://track.example/..."
+            style={FIELD_STYLE}
+          />
+        </Field>
+        <Field label="Listing URL" htmlFor="listing_url">
+          <input
+            id="listing_url"
+            required
+            disabled={disabled}
+            type="url"
+            value={listingUrl}
+            onChange={(e) => setListingUrl(e.target.value)}
+            placeholder="https://listing.example/..."
+            style={FIELD_STYLE}
+          />
+        </Field>
+      </Section>
+
+      <Section number="04" title="Review">
+        <div style={{ border: "1px solid var(--line)", padding: 16, fontSize: "0.85rem", display: "grid", gap: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "var(--graphite)" }}>Order</span>
+            <span>
+              {orderId || "—"} {sku && `· ${sku}`}
+            </span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "var(--graphite)" }}>Amount</span>
+            <span style={{ fontWeight: 600 }}>{dollarsValid ? `$${Number(amount).toFixed(2)}` : "—"}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+            <span style={{ color: "var(--graphite)" }}>Seller</span>
+            <span className="mono" style={{ fontSize: "0.78rem", textAlign: "right" }}>
+              {seller || "—"}
+            </span>
+          </div>
+          <p style={{ color: "var(--graphite)", fontSize: "0.78rem", marginTop: 6 }}>
+            You&rsquo;ll be recorded as the buyer, using your connected wallet.
+          </p>
+        </div>
+
+        <div style={{ marginTop: 8 }}>
+          <button
+            type="submit"
+            disabled={disabled}
+            style={{
+              fontFamily: "var(--sans)",
+              fontWeight: 600,
+              fontSize: "0.88rem",
+              padding: "12px 22px",
+              border: "1.5px solid var(--ink)",
+              background: disabled ? "var(--line)" : "var(--ink)",
+              color: disabled ? "var(--ink)" : "var(--surface)",
+              cursor: disabled ? "default" : "pointer",
+            }}
+          >
+            {state === "pending" ? "Opening claim…" : "Open claim"}
+          </button>
+          {state === "error" && (
+            <p style={{ color: "var(--signal)", fontSize: "0.8rem", marginTop: 10, maxWidth: 400 }}>{error}</p>
+          )}
+        </div>
+      </Section>
     </form>
   );
 }

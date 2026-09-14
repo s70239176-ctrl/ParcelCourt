@@ -6,32 +6,27 @@ export default function NewClaimPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: "1.4rem" }}>Open a claim</h2>
-        <p style={{ color: "var(--ink-soft)", marginTop: 6, maxWidth: 560 }}>
-          You&rsquo;ll need a wallet connected to the network this deployment
-          points at. Opening a claim makes you its buyer — the contract reads
-          that from your connected address, not from anything typed below.
-        </p>
-      </div>
+      <p className="field-label" style={{ marginBottom: 6 }}>
+        Case intake
+      </p>
+      <h1 style={{ fontSize: "1.6rem", marginBottom: 40 }}>Open a claim</h1>
 
       {mock ? (
         <div
-          className="hairline"
           style={{
-            border: "1px dashed var(--hairline-strong)",
-            padding: "48px 24px",
+            border: "1px dashed var(--line-strong)",
+            padding: "56px 24px",
             textAlign: "center",
-            color: "var(--ink-soft)",
+            maxWidth: 480,
           }}
         >
-          <p style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: "1.1rem" }}>
-            This deployment is running in mock mode.
+          <p className="field-label" style={{ fontSize: "0.8rem", marginBottom: 12 }}>
+            Mock mode
           </p>
-          <p style={{ marginTop: 8, fontSize: "0.9rem" }}>
-            Mock mode renders fixed demo data — there&rsquo;s no live contract
-            behind it to open a real claim against. Switch to live mode to
-            submit one.
+          <p style={{ color: "var(--graphite)", lineHeight: 1.6 }}>
+            This deployment is rendering fixture data. There&rsquo;s no live
+            contract behind it to open a real claim against — switch to live
+            mode to submit one.
           </p>
         </div>
       ) : (

@@ -1,17 +1,21 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
-
 :root {
-  --paper: #f6f1ea;
-  --paper-dim: #efe8de;
-  --ink: #111111;
-  --ink-soft: #4a453f;
-  --oxblood: #8b1e1e;
-  --oxblood-ink: #f6f1ea;
-  --hairline: rgba(17, 17, 17, 0.18);
-  --hairline-strong: rgba(17, 17, 17, 0.32);
+  /* Color — warm off-white ground, near-black ink, brick-red signal.
+     Restrained: signal appears only for real dispute/verdict/error states,
+     never decoration. */
+  --bg: #f3f1ea;
+  --surface: #ffffff;
+  --ink: #14130f;
+  --graphite: #5b5850;
+  --graphite-soft: #8b8778;
+  --line: #ddd9d0;
+  --line-strong: #b3ada0;
+  --signal: #b62f1c;
+  --signal-soft: rgba(182, 47, 28, 0.07);
 
-  --serif: "Fraunces", "Source Serif 4", Georgia, serif;
-  --sans: "IBM Plex Sans", "Inter", -apple-system, sans-serif;
+  --sans: var(--font-sans), -apple-system, "Segoe UI", sans-serif;
+  --mono: var(--font-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  --content-max: 1040px;
 }
 
 * {
@@ -22,7 +26,7 @@ html,
 body {
   padding: 0;
   margin: 0;
-  background: var(--paper);
+  background: var(--bg);
   color: var(--ink);
 }
 
@@ -31,6 +35,7 @@ body {
   font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1, "cv05" 1;
 }
 
 a {
@@ -39,27 +44,125 @@ a {
 
 h1,
 h2,
-h3 {
-  font-family: var(--serif);
-  font-weight: 500;
-  letter-spacing: -0.01em;
+h3,
+h4 {
+  font-family: var(--sans);
+  font-weight: 600;
+  letter-spacing: -0.015em;
   margin: 0;
 }
 
+table {
+  font-variant-numeric: tabular-nums;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* --- Recurring motifs, used sparingly (section 29) --- */
+
+/* Case-identifier type treatment — the one bold gesture in the system. */
+.case-id {
+  font-family: var(--sans);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.95;
+}
+
+/* A manifest-perforation-style rule, used as a section divider instead of
+   a plain hairline where a stronger break is wanted. */
+.manifest-rule {
+  height: 1px;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--line-strong) 0,
+    var(--line-strong) 5px,
+    transparent 5px,
+    transparent 10px
+  );
+  border: none;
+}
+
+/* Small uppercase field/section labels — used only for genuinely short
+   labels or state names, never above arbitrary prose. */
+.field-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+
+.mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
 .hairline {
-  border-color: var(--hairline);
+  border-color: var(--line);
 }
 
 .hairline-strong {
-  border-color: var(--hairline-strong);
+  border-color: var(--line-strong);
 }
 
-/* Focus visibility: keyboard users always get a clear oxblood outline. */
+/* --- Status color language --- */
+.status-signal {
+  color: var(--signal);
+}
+
+.status-quiet {
+  color: var(--graphite);
+}
+
+/* --- Motion: reveal-on-action only, nothing ambient (skill guidance +
+   spec section 19: avoid scattered hover/entrance effects). --- */
+.row-interactive {
+  transition: background-color 120ms ease;
+}
+.row-interactive:hover {
+  background-color: var(--signal-soft);
+}
+
+.link-underline {
+  text-decoration: none;
+  background-image: linear-gradient(var(--ink), var(--ink));
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  transition: background-size 140ms ease;
+}
+.link-underline:hover {
+  background-size: 0% 1px;
+}
+
+/* Focus visibility: keyboard users always get a clear signal-colored outline. */
 a:focus-visible,
 button:focus-visible,
+input:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid var(--oxblood);
+  outline: 2px solid var(--signal);
   outline-offset: 2px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--line) 0%, var(--line-strong) 50%, var(--line) 100%);
+  background-size: 400px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -85,5 +188,39 @@ button:focus-visible,
   }
   a {
     text-decoration: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .case-id {
+    font-size: 2.4rem !important;
+  }
+  .before-after-grid {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+  .evidence-grid {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+  .docket-row-grid {
+    grid-template-columns: 1fr 1fr !important;
+    row-gap: 6px !important;
+  }
+  .docket-row-grid > :nth-child(3) {
+    order: 3;
+  }
+  .docket-row-grid > :nth-child(4) {
+    order: 4;
+    justify-content: flex-start !important;
+  }
+}
+
+@media (min-width: 721px) {
+  .mobile-only {
+    display: none !important;
   }
 }

@@ -1,42 +1,39 @@
 import Link from "next/link";
 import { FIXTURE_CLAIMS } from "@/lib/fixtures";
-import VerdictChip from "@/components/VerdictChip";
+import { caseId } from "@/components/DocketRow";
+import StatusBadge from "@/components/StatusBadge";
 
 export default function DemoPage() {
   return (
     <div>
-      <h2 style={{ fontSize: "1.6rem", marginBottom: 8 }}>Three fixtures</h2>
-      <p style={{ color: "var(--ink-soft)", marginBottom: 32, maxWidth: 600, lineHeight: 1.6 }}>
+      <p className="field-label" style={{ marginBottom: 6 }}>
+        Reference fixtures
+      </p>
+      <h1 style={{ fontSize: "1.6rem", marginBottom: 8 }}>Three fixtures</h1>
+      <p style={{ color: "var(--graphite)", marginBottom: 40, maxWidth: 560, lineHeight: 1.6 }}>
         Same SKU, same $89.00 wireless earbuds, three different inbound
         conditions. Same rubric, three different verdicts.
       </p>
 
-      <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-        {FIXTURE_CLAIMS.map((claim, i) => (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 1 }}>
+        {FIXTURE_CLAIMS.map((claim) => (
           <Link
             key={claim.id}
             href={`/claims/${claim.id}`}
+            className="row-interactive"
             style={{
-              flex: "1 1 260px",
               textDecoration: "none",
               color: "inherit",
-              border: "1px solid var(--hairline-strong)",
-              padding: 20,
+              border: "1px solid var(--line)",
+              padding: 24,
               display: "block",
             }}
           >
-            <p
-              style={{
-                fontSize: "0.72rem",
-                letterSpacing: "0.1em",
-                color: "var(--ink-soft)",
-                marginBottom: 12,
-              }}
-            >
-              CLAIM {claim.id} · FIXTURE {String(i + 1).padStart(2, "0")}
+            <p className="mono" style={{ fontSize: "0.74rem", color: "var(--graphite)", marginBottom: 14 }}>
+              {caseId(claim.id)}
             </p>
-            <VerdictChip verdict={claim.verdict as any} animate={false} />
-            <p style={{ fontSize: "0.85rem", marginTop: 16, lineHeight: 1.6, color: "var(--ink-soft)" }}>
+            <StatusBadge status={claim.status} verdict={claim.verdict} size="large" />
+            <p style={{ fontSize: "0.85rem", marginTop: 16, lineHeight: 1.6, color: "var(--graphite)" }}>
               {claim.rationale.slice(0, 140)}…
             </p>
           </Link>

@@ -31,18 +31,19 @@ export default function AdjudicateButton({ claimId }: { claimId: number }) {
         disabled={state === "pending"}
         style={{
           fontFamily: "var(--sans)",
+          fontWeight: 600,
           fontSize: "0.85rem",
-          padding: "10px 18px",
+          padding: "10px 20px",
           border: "1.5px solid var(--ink)",
-          background: state === "pending" ? "var(--paper-dim)" : "transparent",
+          background: state === "pending" ? "var(--line)" : "transparent",
           cursor: state === "pending" ? "default" : "pointer",
         }}
       >
         {state === "pending" ? "Awaiting equivalence…" : "Run adjudication"}
       </button>
       {state === "error" && (
-        <p style={{ color: "var(--oxblood)", fontSize: "0.8rem", marginTop: 8, maxWidth: 260 }}>
-          Fetch failed: {error}
+        <p style={{ color: "var(--signal)", fontSize: "0.8rem", marginTop: 8, maxWidth: 260 }}>
+          {error}
         </p>
       )}
     </div>

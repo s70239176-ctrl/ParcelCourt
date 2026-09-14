@@ -31,35 +31,36 @@ export default async function RubricPage() {
 
   return (
     <article style={{ maxWidth: 720 }}>
-      <h2 style={{ fontSize: "1.6rem", marginBottom: 8 }}>Rubric {rubric.rubric_id}</h2>
-      <p style={{ color: "var(--ink-soft)", marginBottom: 32, lineHeight: 1.6 }}>
+      <p className="field-label" style={{ marginBottom: 6 }}>
+        Adjudication rubric
+      </p>
+      <h1 style={{ fontSize: "1.6rem", marginBottom: 8 }}>Rubric {rubric.rubric_id}</h1>
+      <p style={{ color: "var(--graphite)", marginBottom: 40, lineHeight: 1.6 }}>
         ParcelCourt answers one question: what condition was this parcel in
         when it arrived, and who bears that? An isolated JPEG is never
         dispositive alone, from either side, at any claim size.
       </p>
 
-      <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 40 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 48 }}>
         <thead>
-          <tr style={{ borderBottom: "1px solid var(--hairline-strong)", textAlign: "left" }}>
-            <th style={{ padding: "8px 12px 8px 0", fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 500 }}>
-              PARTY
+          <tr style={{ borderBottom: "1px solid var(--line-strong)", textAlign: "left" }}>
+            <th className="field-label" style={{ padding: "8px 12px 8px 0", fontWeight: 600 }}>
+              Party
             </th>
-            <th style={{ padding: "8px 12px", fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 500 }}>
-              STRONG
+            <th className="field-label" style={{ padding: "8px 12px", fontWeight: 600 }}>
+              Strong
             </th>
-            <th style={{ padding: "8px 0 8px 12px", fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 500 }}>
-              WEAK
+            <th className="field-label" style={{ padding: "8px 0 8px 12px", fontWeight: 600 }}>
+              Weak
             </th>
           </tr>
         </thead>
         <tbody>
           {EVIDENCE_TABLE.map((row) => (
-            <tr key={row.party} style={{ borderBottom: "1px solid var(--hairline)" }}>
-              <td style={{ padding: "14px 12px 14px 0", fontFamily: "var(--serif)", fontStyle: "italic" }}>
-                {row.party}
-              </td>
-              <td style={{ padding: "14px 12px", fontSize: "0.88rem", lineHeight: 1.5 }}>{row.strong}</td>
-              <td style={{ padding: "14px 0 14px 12px", fontSize: "0.88rem", lineHeight: 1.5, color: "var(--ink-soft)" }}>
+            <tr key={row.party} style={{ borderBottom: "1px solid var(--line)" }}>
+              <td style={{ padding: "16px 12px 16px 0", fontWeight: 700 }}>{row.party}</td>
+              <td style={{ padding: "16px 12px", fontSize: "0.88rem", lineHeight: 1.5 }}>{row.strong}</td>
+              <td style={{ padding: "16px 0 16px 12px", fontSize: "0.88rem", lineHeight: 1.5, color: "var(--graphite)" }}>
                 {row.weak}
               </td>
             </tr>
@@ -67,8 +68,10 @@ export default async function RubricPage() {
         </tbody>
       </table>
 
-      <h3 style={{ fontSize: "1.1rem", marginBottom: 12 }}>Decision logic</h3>
-      <ul style={{ paddingLeft: 20, lineHeight: 1.8, marginBottom: 32 }}>
+      <p className="field-label" style={{ marginBottom: 14 }}>
+        Decision logic
+      </p>
+      <ul style={{ paddingLeft: 20, lineHeight: 1.8, marginBottom: 40 }}>
         {DECISION_LOGIC.map((line) => (
           <li key={line} style={{ fontSize: "0.92rem" }}>
             {line}
@@ -76,8 +79,10 @@ export default async function RubricPage() {
         ))}
       </ul>
 
-      <h3 style={{ fontSize: "1.1rem", marginBottom: 12 }}>Defaults when evidence is thin</h3>
-      <p style={{ fontSize: "0.92rem", lineHeight: 1.7 }}>
+      <p className="field-label" style={{ marginBottom: 14 }}>
+        Defaults when evidence is thin
+      </p>
+      <p style={{ fontSize: "0.92rem", lineHeight: 1.7, color: "var(--graphite)" }}>
         Claims under {`$${(rubric.min_meaningful_claim_cents / 100).toFixed(2)}`} resolve
         buyer-favorable as INSUFFICIENT when neither side posts strong
         evidence. Everything else with thin evidence on both sides splits

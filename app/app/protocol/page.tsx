@@ -24,8 +24,11 @@ const LAYERS = [
 export default function ProtocolPage() {
   return (
     <div style={{ maxWidth: 640 }}>
-      <h2 style={{ fontSize: "1.6rem", marginBottom: 8 }}>Protocol</h2>
-      <p style={{ color: "var(--ink-soft)", marginBottom: 32, lineHeight: 1.6 }}>
+      <p className="field-label" style={{ marginBottom: 6 }}>
+        On-chain / off-chain
+      </p>
+      <h1 style={{ fontSize: "1.6rem", marginBottom: 8 }}>Protocol</h1>
+      <p style={{ color: "var(--graphite)", marginBottom: 40, lineHeight: 1.6 }}>
         What is on-chain vs. off-chain, top to bottom.
       </p>
 
@@ -36,29 +39,30 @@ export default function ProtocolPage() {
             style={{
               display: "flex",
               gap: 20,
-              paddingBottom: 24,
-              borderLeft: i < LAYERS.length - 1 ? "1px solid var(--hairline-strong)" : "1px solid transparent",
+              paddingBottom: 28,
+              borderLeft: i < LAYERS.length - 1 ? "1px solid var(--line-strong)" : "1px solid transparent",
               marginLeft: 14,
               paddingLeft: 24,
               position: "relative",
             }}
           >
-            <div
+            <span
+              className="mono"
               style={{
                 position: "absolute",
-                left: -6,
-                top: 2,
-                width: 11,
-                height: 11,
-                borderRadius: "50%",
-                background: "var(--oxblood)",
+                left: -14,
+                top: -2,
+                fontSize: "0.72rem",
+                color: "var(--graphite-soft)",
+                background: "var(--bg)",
+                padding: "0 4px",
               }}
-            />
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
             <div>
-              <h3 style={{ fontSize: "1rem", marginBottom: 6 }}>{layer.name}</h3>
-              <p style={{ fontSize: "0.88rem", color: "var(--ink-soft)", lineHeight: 1.6 }}>
-                {layer.detail}
-              </p>
+              <h3 style={{ fontSize: "1rem", marginBottom: 6, fontWeight: 700 }}>{layer.name}</h3>
+              <p style={{ fontSize: "0.88rem", color: "var(--graphite)", lineHeight: 1.6 }}>{layer.detail}</p>
             </div>
           </div>
         ))}

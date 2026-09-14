@@ -13,12 +13,12 @@ export default function ConnectWalletButton() {
     return (
       <span
         title={address}
+        className="mono"
         style={{
-          fontFamily: "monospace",
           fontSize: "0.8rem",
-          border: "1px solid var(--hairline-strong)",
+          border: "1px solid var(--line-strong)",
           padding: "7px 12px",
-          color: "var(--ink-soft)",
+          color: "var(--graphite)",
         }}
       >
         {truncate(address)}
@@ -33,17 +33,18 @@ export default function ConnectWalletButton() {
         disabled={connecting}
         style={{
           fontFamily: "var(--sans)",
+          fontWeight: 600,
           fontSize: "0.8rem",
-          padding: "7px 14px",
+          padding: "7px 16px",
           border: "1.5px solid var(--ink)",
-          background: connecting ? "var(--paper-dim)" : "transparent",
+          background: connecting ? "var(--line)" : "transparent",
           cursor: connecting ? "default" : "pointer",
         }}
       >
         {connecting ? "Connecting…" : "Connect wallet"}
       </button>
       {error && (
-        <p style={{ color: "var(--oxblood)", fontSize: "0.72rem", marginTop: 4, maxWidth: 220 }}>
+        <p style={{ color: "var(--signal)", fontSize: "0.72rem", marginTop: 4, maxWidth: 220 }}>
           {error}
         </p>
       )}
