@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ConnectWalletButton from "./ConnectWalletButton";
 
 const NAV = [
   { href: "/", label: "Docket" },
@@ -54,20 +55,23 @@ export default function Masthead() {
             Verdict layer for the parcel
           </p>
         </div>
-        <nav
+        <div
           className="no-print"
-          style={{ display: "flex", gap: 20, fontSize: "0.88rem", paddingBottom: 4 }}
+          style={{ display: "flex", alignItems: "center", gap: 24, paddingBottom: 4, flexWrap: "wrap" }}
         >
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{ textDecoration: "none", borderBottom: "1px solid transparent" }}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+          <nav style={{ display: "flex", gap: 20, fontSize: "0.88rem" }}>
+            {NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{ textDecoration: "none", borderBottom: "1px solid transparent" }}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <ConnectWalletButton />
+        </div>
       </div>
     </header>
   );
