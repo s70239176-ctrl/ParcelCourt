@@ -102,6 +102,52 @@ async function getReadClient() {
   return cachedReadClient;
 }
 
+// MetaMask (and most injected wallets) reject any RPC call whose target
+// chainId doesn't match whatever network the wallet currently has active
+// — this is the "chainId should be same as current chainId" viem error.
+// genlayer-js doesn't prompt a switch on its own, and a custom
+// environment like studio-dev is one the wallet has never even heard of,
+// so it has to be explicitly told to add/switch to it first.
+async function ensureWalletOnChain(
+  injected: any,
+  chain: import("genlayer-js/types").GenLayerChain
+) {
+  const hexChainId = `0x${chain.id.toString(16)}`;
+  try {
+    await injected.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: hexChainId }],
+    });
+  } catch (switchError: any) {
+    // 4902: the wallet doesn't know this chain yet — add it, which also
+    // switches to it. 4001: the user rejected the prompt — surface that
+    // plainly rather than let a raw provider error bubble up.
+    if (switchError?.code === 4902) {
+      await injected.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: hexChainId,
+            chainName: chain.name,
+            nativeCurrency: chain.nativeCurrency,
+            rpcUrls: chain.rpcUrls.default.http,
+            blockExplorerUrls: chain.blockExplorers?.default
+              ? [chain.blockExplorers.default.url]
+              : undefined,
+          },
+        ],
+      });
+    } else if (switchError?.code === 4001) {
+      throw new Error(
+        `Network switch to "${chain.name}" (chain ${chain.id}) was declined ` +
+          "in the wallet. This transaction can't be signed on the wrong network."
+      );
+    } else {
+      throw switchError;
+    }
+  }
+}
+
 // Write client: bound to a signer at creation time (wallet or demo
 // account), per the documented pattern — writeContract itself takes no
 // account argument. Built fresh per call rather than cached, since the
@@ -114,6 +160,11 @@ async function getWriteClient() {
   // back to a configured demo account for headless demos. Never block the
   // UI behind a broken wallet modal — surface a clear error instead.
   const injected = typeof window !== "undefined" ? (window as any).ethereum : undefined;
+
+  if (injected) {
+    await ensureWalletOnChain(injected, chain);
+  }
+
   const rawAccount: string | undefined = injected
     ? (await injected.request({ method: "eth_requestAccounts" }))?.[0]
     : process.env.NEXT_PUBLIC_GENLAYER_DEMO_ACCOUNT;
