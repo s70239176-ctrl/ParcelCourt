@@ -270,7 +270,13 @@ export async function adjudicate(id: number): Promise<string> {
     // `0x${string}`, waitForTransactionReceipt wants the nominally-branded
     // Hash (`0x${string}` & { length: 66 }).
     hash: transactionHash as unknown as import("genlayer-js/types").Hash,
-    status: TransactionStatus.FINALIZED,
+    // ACCEPTED, not FINALIZED — matches deploy/001_deploy_parcel_court.ts,
+    // the one write path already proven to work end-to-end against this
+    // environment. FINALIZED is a later, stricter consensus stage that a
+    // dev-purposed chain may take much longer to reach (or not progress
+    // to promptly at all) even once execution has genuinely succeeded —
+    // that's the likely cause of a "current status: NaN" timeout here.
+    status: TransactionStatus.ACCEPTED,
   });
   // The receipt shape doesn't guarantee a decoded `verdict` field for an
   // arbitrary contract, so re-read state rather than trust the receipt.
@@ -308,9 +314,10 @@ export async function openClaim(params: {
     value: BigInt(0),
   });
   await client.waitForTransactionReceipt({
-    // Same genlayer-js Hash-branding gap as adjudicate() above.
+    // Same Hash-branding gap as everywhere else this appears.
     hash: transactionHash as unknown as import("genlayer-js/types").Hash,
-    status: TransactionStatus.FINALIZED,
+    // ACCEPTED, not FINALIZED — see the matching comment in adjudicate() above.
+    status: TransactionStatus.ACCEPTED,
   });
 
   // Same pattern as scripts/seed_fixtures.ts: writeContract's receipt

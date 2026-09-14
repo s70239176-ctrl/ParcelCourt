@@ -118,7 +118,10 @@ export async function writeAndConfirm(
     // codebase: writeContract returns a plain `0x${string}`,
     // waitForTransactionReceipt wants the nominally-branded Hash type.
     hash: hash as unknown as import("genlayer-js/types").Hash,
-    status: TransactionStatus.FINALIZED,
+    // ACCEPTED, not FINALIZED — matches deploy/001_deploy_parcel_court.ts
+    // and app/lib/genlayer.ts in the parent project; see the detailed
+    // comment in the latter.
+    status: TransactionStatus.ACCEPTED,
   });
   return hash;
 }

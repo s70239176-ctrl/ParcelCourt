@@ -181,7 +181,13 @@ class ParcelCourt(gl.contract.Contract):
         self.claims[claim_id] = Claim(
             order_id=order_id,
             sku=sku,
-            amount_cents=amount_cents,
+            # u256 in the function signature doesn't actually convert the
+            # incoming value — Python type hints aren't enforced at
+            # runtime, so this arrives as a plain int from the RPC call.
+            # The Claim dataclass field's storage descriptor specifically
+            # requires the wrapped u256 type (it calls .as_bytes on
+            # assignment), so it has to be wrapped explicitly here.
+            amount_cents=u256(amount_cents),
             buyer=gl.message.sender_address,
             seller=seller,
             tracking_url=tracking_url,
@@ -216,7 +222,11 @@ class ParcelCourt(gl.contract.Contract):
             uri=uri,
             sha256=sha256,
             note=note,
-            weight_g=weight_g,
+            # Same reason as amount_cents in open_claim: the u256 type hint
+            # on the function parameter doesn't convert the incoming
+            # plain-int value — wrap it explicitly before it hits the
+            # dataclass field's storage descriptor.
+            weight_g=u256(weight_g),
             submitted_by=gl.message.sender_address,
         )
         rows = list(self.evidence[claim_id])

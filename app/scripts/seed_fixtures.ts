@@ -206,7 +206,9 @@ async function main() {
     // Same genlayer-js Hash-branding gap as deploy/001_deploy_parcel_court.ts:
     // writeContract returns a plain `0x${string}`, waitForTransactionReceipt
     // wants the nominally-branded Hash (`0x${string}` & { length: 66 }).
-    return client.waitForTransactionReceipt({ hash: hash as unknown as Hash, status: TransactionStatus.FINALIZED });
+    // ACCEPTED, not FINALIZED — matches deploy/001_deploy_parcel_court.ts
+    // and app/lib/genlayer.ts; see the detailed comment in the latter.
+    return client.waitForTransactionReceipt({ hash: hash as unknown as Hash, status: TransactionStatus.ACCEPTED });
   }
 
   for (const scenario of SCENARIOS) {
